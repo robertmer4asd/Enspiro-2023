@@ -1,0 +1,52 @@
+#include <DHT11.h>
+#include <LiquidCrystal.h>
+#include "RTClib.h"
+
+const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+DHT11 dht11(2);
+RTC_DS1307 rtc;
+
+void setup(){
+   Serial.begin(9600);
+   lcd.begin(16,2);
+   lcd.clear();
+   lcd.setCursor(0,0);
+  
+   ///lcd.print("NEXTLAB.TECH");
+   pinMode(11,OUTPUT);
+   digitalWrite(11, LOW);
+   delay(1000);
+}
+void loop(){
+  int valUmiditate = analogRead(A2);
+  int temp = dht11.readTemperature();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("UMIDITATE: ");
+  lcd.print(valUmiditate);
+  lcd.setCursor(0, 10);
+  lcd.print("TEMPERATURA: ");
+  lcd.print(temp);
+  Serial.println(valUmiditate);
+  if(temp > 29){
+    if(valUmiditate > 500){
+      digitalWrite(11, HIGH);
+      delay(1000);
+      digitalWrite(11, LOW);
+    }
+    else{
+      digitalWrite(11, LOW);
+    }  
+  }
+  if(valUmiditate > 650){
+    digitalWrite(11, HIGH);
+    delay(1000);
+    digitalWrite(11, LOW);
+  }
+  else{
+    digitalWrite(11, LOW);
+  }
+  delay(1000);
+}
