@@ -1,0 +1,97 @@
+#include <DHT11.h>
+#include <LiquidCrystal.h>
+#include "RTClib.h"
+
+const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+DHT11 dht11(2);
+RTC_DS1307 rtc;
+
+void setup(){
+   Serial.begin(9600);
+   lcd.begin(16,2);
+   lcd.clear();
+   lcd.setCursor(0,0);
+  
+   lcd.print("NEXTLAB.TECH");
+   pinMode(11,OUTPUT);
+   digitalWrite(11, LOW);
+   delay(1000);
+
+  if(! rtc.begin()){
+    Serial.println("Couldn't find RTC");
+    Serial.flush();
+    while(1) delay(10);
+  }
+
+  if (! rtc.isrunning()) {
+    Serial.println("RTC is NOT running, let's set the time!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+}
+
+void loop(){
+  DateTime now = rtc.now();
+
+  Serial.print(now.hour(), DEC);
+  Serial.print(":");
+  Serial.print(now.minute(), DEC);
+  Serial.println();
+
+  int valUmiditate = analogRead(A2);
+  int ora = now.hour(), minut = now.minute(), secunda = now.second();
+  int temp = dht11.readTemperature();
+  int tasta = analogRead(A0);
+  int switchState = 0, prevState = 0;
+
+  if(switchState == prevState){
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("UMIDITATE: ");
+    lcd.print(valUmiditate);
+
+    lcd.setCursor(0, 10);
+    lcd.print("TEMPERATURA: ");
+    if(temp > 100) lcd.print((temp / 10) - 2);
+    else lcd.print(temp - 2);
+  }
+  
+  if(tasta < 400 || tasta < 200) switchState = 1;
+
+  if(switchState != prevState){
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("ORA: ");
+    lcd.print(ora);
+    lcd.print(":");
+    lcd.print(minut);
+    lcd.print(":");
+    lcd.print(secunda);
+    delay(2500);
+  }
+
+  switchState = 0;
+  
+  while(ora >= 5 && ora <= 7){
+    if(temp > 29){
+      if(valUmiditate > 500){
+        digitalWrite(11, HIGH);
+        delay(2000);
+        digitalWrite(11, LOW);
+      }
+      else{
+        digitalWrite(11, LOW);
+      }  
+    }
+    if(valUmiditate > 650){
+      digitalWrite(11, HIGH);
+      delay(2000);
+      digitalWrite(11, LOW);
+    }
+    else{
+      digitalWrite(11, LOW);
+    }
+    delay(2000);
+  }
+}
